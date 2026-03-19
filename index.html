@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Color Quest - Sequence Challenge</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            margin: 0;
+        }
+        .game-container {
+            max-width: 500px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 5px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 15px 0;
+            color: white;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        .stat-box {
+            background: rgba(0,0,0,0.3);
+            padding: 8px 15px;
+            border-radius: 10px;
+        }
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 20px auto;
+            max-width: 300px;
+        }
+        .color-cell {
+            aspect-ratio: 1;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.1s, box-shadow 0.2s;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .color-cell:active {
+            transform: scale(0.95);
+        }
+        .color-cell.sequence-active {
+            box-shadow: 0 0 20px 5px rgba(255, 255, 255, 0.8);
+            transform: scale(1.05);
+        }
+        .color-cell.correct {
+            filter: brightness(1.3) saturate(1.5);
+        }
+        .color-cell.wrong {
+            animation: shake 0.5s;
+            filter: brightness(0.5);
+        }
+        .color-cell.disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        .controls {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+            transition: all 0.3s;
+            margin: 5px;
+        }
+        .btn-primary {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.6);
+        }
+        .btn-secondary {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        .message {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+            display: none;
+        }
+        .message.success {
+            background: rgba(76, 175, 80, 0.2);
+            color: #4CAF50;
+            display: block;
+        }
+        .message.error {
+            background: rgba(244, 67, 54, 0.2);
+            color: #f44336;
+            display: block;
+        }
+        .game-over-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+        .modal-content {
+            background: linear-gradient(135deg, #2c3e50, #4a6491);
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+            color: white;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .input-field {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 8px;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            font-size: 16px;
+            margin: 10px 0;
+            box-sizing: border-box;
+        }
+        .input-field:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+        .high-score {
+            color: #ffd700;
+            font-size: 1.2rem;
+            margin: 10px 0;
+        }
+        @media (max-width: 400px) {
+            .grid-container {
+                gap: 8px;
+            }
+            .header h1 {
+                font-size: 1.5rem;
+            }
+            .stats {
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="header">
+            <h1><i class="fas fa-brain"></i> Color Quest</h1>
+            <p>Sequence Memory Challenge</p>
+        </div>
+
+        <div class="stats">
+            <div class="stat-box">Level: <span id="level">1</span></div>
+            <div class="stat-box">Score: <span id="score">0</span></div>
+            <div class="stat-box">Time: <span id="timer">--</span></div>
+        </div>
+
+        <div class="grid-container" id="gridContainer">
+            <!-- Grid cells will be generated by JS -->
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-primary" id="startBtn" onclick="startGame()">
+                <i class="fas fa-play"></i> Start Game
+            </button>
+            <button class="btn btn-secondary" id="resetBtn" onclick="resetGame()" style="display:none">
+                <i class="fas fa-redo"></i> Reset
+            </button>
+        </div>
+
+        <div id="message" class="message"></div>
+    </div>
+
+    <!-- Game Over Modal -->
+    <div id="gameOverModal" class="game-over-modal" style="display:none">
+        <div class="modal-content">
+            <h2 class="text-2xl font-bold mb-4">Game Over!</h2>
+            <p class="text-xl mb-2">Score Akhir: <span id="finalScore" class="text-yellow-300">0</span></p>
+            <p class="high-score">High Score: <span id="highScoreDisplay">0</span></p>
+            <div class="mt-6">
+                <input type="text" class="input-field" id="usernameInput" placeholder="Masukkan username">
+                <button class="btn btn-primary" onclick="sendScoreToBot()">
+                    <i class="fas fa-paper-plane"></i> Kirim ke Bot Telegram
+                </button>
+            </div>
+            <div id="botStatus" class="mt-3"></div>
+            <button class="btn btn-secondary mt-4" onclick="closeModal()">
+                <i class="fas fa-times"></i> Tutup
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Konfigurasi game
+        const PALETTE = [
+            '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', 
+            '#FFEAA7', '#DDA0DD', '#FFA07A', '#98D8C8', '#FF9F43'
+        ];
+        
+        // State variables
+        let level = 1;
+        let score = 0;
+        let sequence = []; // Array warna (string hex)
+        let playerSequence = [];
+        let isSequenceShowing = false;
+        let inputEnabled = false;
+        let timer;
+        let timeLeft = 30;
+        let highScore = localStorage.getItem('colorQuestHighScore') || 0;
+        let gridColors = []; // Array warna di grid (9 elemen)
+        let gridCells = []; // Array elemen DOM grid
+
+        // DOM elements
+        const gridContainer = document.getElementById('gridContainer');
+        const levelDisplay = document.getElementById('level');
+        const scoreDisplay = document.getElementById('score');
+        const timerDisplay = document.getElementById('timer');
+        const startBtn = document.getElementById('startBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const messageDiv = document.getElementById('message');
+        const gameOverModal = document.getElementById('gameOverModal');
+        const finalScoreDisplay = document.getElementById('finalScore');
+        const highScoreDisplay = document.getElementById('highScoreDisplay');
+        const usernameInput = document.getElementById('usernameInput');
+        const botStatus = document.getElementById('botStatus');
+
+        // Inisialisasi grid
+        function initGrid() {
+            gridContainer.innerHTML = '';
+            gridCells = [];
+            
+            // Acak urutan palette untuk grid
+            const shuffledPalette = [...PALETTE].sort(() => Math.random() - 0.5);
+            gridColors = shuffledPalette.slice(0, 9); // Ambil 9 warna pertama
+            
+            for (let i = 0; i < 9; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'color-cell disabled';
+                cell.dataset.color = gridColors[i];
+                cell.style.backgroundColor = gridColors[i];
+                cell.onclick = () => handleCellClick(cell);
+                gridContainer.appendChild(cell);
+                gridCells.push(cell);
+            }
+        }
+
+        // Generate sequence untuk level saat ini
+        function generateSequence() {
+            // Ambil sample acak dari PALETTE tanpa duplikat, sebanyak level (maks 9)
+            const count = Math.min(level, PALETTE.length);
+            const sample = [];
+            const tempPalette = [...PALETTE];
+            
+            for (let i = 0; i < count; i++) {
+                const idx = Math.floor(Math.random() * tempPalette.length);
+                sample.push(tempPalette.splice(idx, 1)[0]);
+            }
+            
+            // Acak urutan
+            sequence = sample.sort(() => Math.random() - 0.5);
+            playerSequence = [];
+        }
+
+        // Tampilkan sequence ke grid
+        async function showSequence() {
+            isSequenceShowing = true;
+            inputEnabled = false;
+            messageDiv.style.display = 'none';
+            
+            // Disable semua cell
+            gridCells.forEach(cell => cell.classList.add('disabled'));
+            
+            // Tampilkan sequence dengan highlight
+            for (let i = 0; i < sequence.length; i++) {
+                const color = sequence[i];
+                const cellIndex = gridColors.indexOf(color);
+                const cell = gridCells[cellIndex];
+                
+                // Highlight
+                cell.classList.add('sequence-active');
+                
+                // Tunggu
+                await new Promise(resolve => setTimeout(resolve, 600));
+                
+                // Remove highlight
+                cell.classList.remove('sequence-active');
+                
+                // Jeda antar warna
+                if (i < sequence.length - 1) {
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                }
+            }
+            
+            isSequenceShowing = false;
+            inputEnabled = true;
+            gridCells.forEach(cell => cell.classList.remove('disabled'));
+            startTimer();
+        }
+
+        // Handle tap pada cell
+        function handleCellClick(cell) {
+            if (!inputEnabled || isSequenceShowing) return;
+            
+            const color = cell.dataset.color;
+            const currentIndex = playerSequence.length;
+            
+            // Cek apakah warna sesuai dengan sequence
+            if (color === sequence[currentIndex]) {
+                // Benar
+                cell.classList.add('correct');
+                playerSequence.push(color);
+                
+                // Jika sequence selesai
+                if (playerSequence.length === sequence.length) {
+                    inputEnabled = false;
+                    clearInterval(timer);
+                    showMessage('Tepat! Level berikutnya...', 'success');
+                    setTimeout(nextLevel, 1000);
+                }
+            } else {
+                // Salah
+                cell.classList.add('wrong');
+                inputEnabled = false;
+                clearInterval(timer);
+                showMessage('Salah! Game Over.', 'error');
+                setTimeout(endGame, 1000);
+            }
+        }
+
+        // Timer
+        function startTimer() {
+            clearInterval(timer);
+            timeLeft = 30;
+            timerDisplay.textContent = timeLeft;
+            
+            timer = setInterval(() => {
+                timeLeft--;
+                timerDisplay.textContent = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    inputEnabled = false;
+                    showMessage('Waktu habis! Game Over.', 'error');
+                    setTimeout(endGame, 1000);
+                }
+            }, 1000);
+        }
+
+        // Message helper
+        function showMessage(text, type) {
+            messageDiv.textContent = text;
+            messageDiv.className = 'message ' + type;
+            messageDiv.style.display = 'block';
+        }
+
+        // Next level
+        function nextLevel() {
+            level++;
+            score += level * 100; // Bonus score per level
+            updateDisplay();
+            generateSequence();
+            showSequence();
+        }
+
+        // Update display
+        function updateDisplay() {
+            levelDisplay.textContent = level;
+            scoreDisplay.textContent = score;
+        }
+
+        // End game
+        function endGame() {
+            clearInterval(timer);
+            inputEnabled = false;
+            
+            // Update high score
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('colorQuestHighScore', highScore);
+            }
+            
+            // Show modal
+            finalScoreDisplay.textContent = score;
+            highScoreDisplay.textContent = highScore;
+            gameOverModal.style.display = 'flex';
+        }
+
+        // Start game
+        function startGame() {
+            level = 1;
+            score = 0;
+            startBtn.style.display = 'none';
+            resetBtn.style.display = 'inline-block';
+            messageDiv.style.display = 'none';
+            initGrid();
+            generateSequence();
+            showSequence();
+            updateDisplay();
+        }
+
+        // Reset game
+        function resetGame() {
+            clearInterval(timer);
+            startBtn.style.display = 'inline-block';
+            resetBtn.style.display = 'none';
+            messageDiv.style.display = 'none';
+            gameOverModal.style.display = 'none';
+            initGrid();
+            level = 1;
+            score = 0;
+            updateDisplay();
+        }
+
+        // Close modal
+        function closeModal() {
+            gameOverModal.style.display = 'none';
+        }
+
+        // Send score to Telegram bot
+    function sendScoreToBot() {
+    const username = usernameInput.value.trim();
+    if (!username) {
+        botStatus.innerHTML = '<span class="text-red-400">Masukkan username!</span>';
+        return;
+    }
+
+    const BOT_TOKEN = '8699818014:AAGPo1C3a-HI4eEeCSko63eZ4_NDHrM-9o0';
+    const CHAT_ID = '8781321907'; // Chat ID yang valid
+
+    botStatus.innerHTML = '<span class="text-yellow-300">Mengirim...</span>';
+
+    fetch(`https://api.telegram.org/bot8699818014:AAGPo1C3a-HI4eEeCSko63eZ4_NDHrM-9o0/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            chat_id: CHAT_ID,
+            text: `/addscore ${username} ${score}`
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.ok) {
+            botStatus.innerHTML = '<span class="text-green-400">Skor terkirim! ✅</span>';
+        } else {
+            botStatus.innerHTML = `<span class="text-red-400">Gagal: ${data.description}</span>`;
+        }
+    })
+    .catch(err => {
+        botStatus.innerHTML = '<span class="text-red-400">Error koneksi</span>';
+    });
+}
+        // Initialize on load
+        window.onload = function() {
+            initGrid();
+            highScoreDisplay.textContent = highScore;
+        };
+    </script>
+</body>
+</html>
